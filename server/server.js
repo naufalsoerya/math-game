@@ -407,7 +407,7 @@ async function api(req, res, url) {
     const { pl } = await authedPlayer(req);
     const me = pl;
     const t = now(); await q.touch(t, me.id);
-    const ev = int(url.searchParams.get('event'), 0, 1e12), ch = int(url.searchParams.get('chat'), 0, 1e12);
+    const ev = int(url.searchParams.get('event'), 0, 2147483647), ch = int(url.searchParams.get('chat'), 0, 2147483647);
     const out = { status: me.status, perms: { board: !!me.perm_board, visit: !!me.perm_visit, chat: !!me.perm_chat } };
     out.events = (await q.eventsFor(me.id, ev)).map(e => ({ id: e.id, type: e.type, emoji: e.emoji, from: e.from_name || 'A friend', at: e.created_at }));
     out.lastEvent = (await q.maxEvent(me.id)).id || 0;
@@ -458,7 +458,7 @@ async function api(req, res, url) {
     const { pl } = await authedPlayer(req);
     const me = pl;
     approved(me); if (!me.perm_chat) fail(403, 'chatOff', 'A grown-up has turned chat off.');
-    const after = int(url.searchParams.get('after'), 0, 1e12); const t = now();
+    const after = int(url.searchParams.get('after'), 0, 2147483647); const t = now();
     const rows = after ? await q.chatAfter(me.group_id, after, 100) : await q.chatLatest(me.group_id, 50);
     return sendJSON(res, 200, {
       messages: rows.map(r => ({ id: r.id, from: r.player_id, name: r.name, text: r.text, at: r.created_at, mine: r.player_id === me.id })),
@@ -492,7 +492,7 @@ async function api(req, res, url) {
   if (p === '/api/chat/history' && M === 'GET') {
     const { pl } = await authedPlayer(req);
     const me = pl;
-    approved(me); await grownUp(req, me); const before = int(url.searchParams.get('before'), 0, 1e12) || 1e12; const isHost = me.status === 'host';
+    approved(me); await grownUp(req, me); const before = int(url.searchParams.get('before'), 0, 2147483647) || 2147483647; const isHost = me.status === 'host';
     const rows = await q.history(me.group_id, before, me.id, 100);
     return sendJSON(res, 200, {
       messages: rows.map(r => {
