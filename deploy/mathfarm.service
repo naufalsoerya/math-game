@@ -1,0 +1,30 @@
+# systemd service for running the friends server without Docker.
+# 1) Copy the package to /opt/adley-math-farm  (site/ and server/ side by side)
+# 2) sudo useradd --system --home /opt/adley-math-farm --shell /usr/sbin/nologin mathfarm
+#    sudo mkdir -p /opt/adley-math-farm/server/data && sudo chown -R mathfarm: /opt/adley-math-farm/server/data
+# 3) cp server/.env.example server/.env and edit it (HOST_KEY, TRUST_PROXY ...)
+# 4) sudo cp mathfarm.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now mathfarm
+[Unit]
+Description=Adley's Math Farm (game website + friends server)
+After=network.target
+
+[Service]
+Type=simple
+User=mathfarm
+Group=mathfarm
+WorkingDirectory=/opt/adley-math-farm/server
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/adley-math-farm/server/data
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

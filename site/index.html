@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en" translate="no" class="notranslate">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Adley's Math Farm</title>
+<meta name="description" content="A 3D math adventure game for Grade 1: 50 island levels, 18 math farms and bonus games.">
+<meta name="google" content="notranslate">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#7FD0FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Math Farm">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="fonts/baloo-2-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/andika-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css?v=6164428643">
+<link rel="stylesheet" href="css/game.css?v=6164428643">
+</head>
+<body>
+<div id="app">
+  <div id="stage" role="application" aria-label="3D farm islands. Tap the ground to walk. Drag to look around. Tap a farm to go there."></div>
+
+  <header id="hud">
+    <div id="visitBar" hidden>
+      <span class="vb-ico" aria-hidden="true">🏝️</span>
+      <span class="vb-t"><b id="vbName"></b><small id="vbSub"></small></span>
+      <button class="btn soft sm" id="vbCheer" aria-expanded="false" aria-controls="vbCheers">❤️ Cheer</button>
+      <button class="btn go sm" id="vbHome">🏠 Home</button>
+      <div class="vb-cheers" id="vbCheers" hidden></div>
+    </div>
+    <button class="chip land" id="landChip" aria-label="Open the journey map"><span id="landGem"></span><span class="lname"><b id="landName">Sunny Meadow</b><small id="landSub">Level 1 of 50</small></span></button>
+    <div class="chip prog" aria-label="Farms harvested on this island"><span aria-hidden="true">🌾</span><div class="bar"><i id="progBar"></i></div><b id="progTxt">0/18</b></div>
+    <span class="hsp"></span>
+    <div class="chip coins" aria-label="Coins"><span class="coin-i" aria-hidden="true">$</span><b id="coinTxt">0</b></div>
+    <div class="chip stars" aria-label="Stars"><span aria-hidden="true">⭐</span><b id="starTxt">0</b></div>
+    <div class="chip streak" id="streakChip" aria-label="Answers right in a row" hidden><span aria-hidden="true">🔥</span><b id="streakTxt">0</b></div>
+    <div class="hbtns">
+      <button class="ibtn" id="bonusBtn" aria-label="Bonus games">🎮<i class="dot" id="bonusDot" hidden></i></button>
+      <button class="ibtn" id="shopBtn" aria-label="Shop">🛒</button>
+      <button class="ibtn" id="friendsBtn" aria-label="Friends" hidden>👫<i class="dot" id="friendsDot" hidden></i></button>
+      <button class="ibtn help" id="helpBtn" aria-label="Help: ask Chicky">❓</button>
+      <button class="ibtn" id="musBtn" aria-label="Music on or off">🎵</button>
+      <button class="ibtn" id="sndBtn" aria-label="Sound on or off">🔊</button>
+      <button class="ibtn" id="parBtn" aria-label="For grown-ups">👪</button>
+    </div>
+  </header>
+
+  <button id="miniBtn" aria-label="Open the island map"><canvas id="mini" width="300" height="300"></canvas><span class="mlab">Map</span></button>
+
+  <div id="ctrl" aria-label="Camera controls">
+    <button class="ibtn big way" id="wayBtn" aria-label="Show the way to a farm"><span aria-hidden="true">🐾</span><small>Find</small></button>
+    <div class="cgrid">
+      <button class="ibtn" id="rotL" aria-label="Turn the view left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9a7 7 0 1 1-1 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M3 4v6h6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="ibtn" id="rotR" aria-label="Turn the view right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 9a7 7 0 1 0 1 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M21 4v6h-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="ibtn" id="zIn" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>
+      <button class="ibtn" id="zOut" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>
+    </div>
+    <button class="ibtn" id="zMe" aria-label="Back to my farmer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+  </div>
+
+  <button id="buddy" aria-label="Helper chick, tap to hear again"><span class="bface" aria-hidden="true">🐥</span><span class="bsay" id="bsay">Tap the ground to walk. Find the farms!</span></button>
+
+  <div id="prompt" hidden>
+    <span class="pico" id="pIco" aria-hidden="true"></span>
+    <div class="ptx"><b id="pName"></b><small id="pSub"></small></div>
+    <span class="pst" id="pStars" aria-hidden="true"></span>
+    <button class="btn go" id="pGo">Play ▶</button>
+  </div>
+
+  <div id="mapov" class="ov" hidden>
+    <div class="card sheet mapcard" role="dialog" aria-modal="true" aria-label="Island map">
+      <div class="shead"><h2>Island map</h2><button class="xbtn" id="mapX" aria-label="Close the map">✕</button></div>
+      <div class="mapbody">
+        <canvas id="bigmap" width="720" height="720" aria-label="Tap a farm or an explored place to walk there"></canvas>
+        <div class="mside">
+          <p class="pnote">Tap a farm or a place you have explored to walk there. The dark parts are still a mystery!</p>
+          <ul class="mleg">
+            <li><span class="mk me"></span>You</li>
+            <li><span class="mk">🏡</span>Home</li>
+            <li><span class="mk ring">🥕</span>Farm to harvest</li>
+            <li><span class="mk ring gold">⭐</span>Harvested</li>
+            <li><span class="mk">🔒</span>Broken bridge</li>
+            <li><span class="mk">🎁</span>Treasure</li>
+          </ul>
+          <div class="quests" id="mapQuests"></div>
+          <p class="mstat" id="mapStat"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="qwrap" class="ov" hidden>
+    <div class="card qcard" role="dialog" aria-modal="true" aria-labelledby="qtext">
+      <div class="qhead"><span class="qico" id="qico" aria-hidden="true"></span><div class="qtt"><b id="qfarm"></b><small id="qtopic"></small></div><span class="qstars" id="qstars" aria-hidden="true"></span><button class="xbtn" id="qclose" aria-label="Back to the island">✕</button></div>
+      <div class="qbody" id="qbody">
+        <div class="qrow"><button class="say" id="qsay" aria-label="Read the question aloud">🔊</button><p id="qtext"></p></div>
+        <div id="qvis" class="vis"></div>
+        <div id="qtap" class="tapc" hidden><span>Tapped</span><b id="qtapn">0</b><button id="qtapr">Clear</button></div>
+        <div id="qans"></div>
+        <div id="qfb" class="fb" hidden></div>
+      </div>
+      <div class="qfoot"><button class="btn soft" id="qhint">🐥 Hint</button><span class="sp"></span><button class="btn soft" id="qback" hidden>Island</button><button class="btn go" id="qnext" hidden>Next</button></div>
+    </div>
+  </div>
+
+  <div id="levelup" class="ov" hidden>
+    <div class="card lcard" role="dialog" aria-modal="true" aria-labelledby="ltitle">
+      <div class="lmedal" id="lmedal"></div>
+      <h2 id="ltitle"></h2>
+      <p id="lmsg"></p>
+      <div class="lstars" id="lstars"></div>
+      <div class="quests lq" id="lquests"></div>
+      <div class="lbonus" id="lbonus" hidden></div>
+      <button class="btn go big" id="lgo">Sail on</button>
+    </div>
+  </div>
+
+  <div id="sail" class="ov sail" hidden><div class="sailbox"><div class="sea" aria-hidden="true"><span class="boat">⛵</span><span class="isl">🏝️</span></div><p id="sailT">Sailing…</p></div></div>
+
+  <div id="arcade" hidden>
+    <canvas id="arcCv"></canvas>
+    <div class="arcbar">
+      <span class="chip arcname"><span id="arcIcon" aria-hidden="true"></span><b id="arcName"></b></span>
+      <span class="chip"><small>Score</small><b id="arcScore">0</b></span>
+      <span class="chip" id="arcInfo"></span>
+      <span class="hsp"></span>
+      <button class="xbtn" id="arcX" aria-label="Stop the game">✕</button>
+    </div>
+    <div class="arcpanel" id="arcIntro"><div class="card acard"><h2 id="arcTitle"></h2><p id="arcHow"></p><button class="btn go big" id="arcGo">Start! ▶</button></div></div>
+    <div class="arccount" id="arcCount" hidden>3</div>
+    <div class="arcpanel" id="arcEnd" hidden><div class="card acard"><h2 id="arcEndT"></h2><p id="arcEndP"></p><button class="btn go big" id="arcDone">OK</button></div></div>
+  </div>
+
+  <div id="hub" class="ov" hidden>
+    <div class="card sheet" role="dialog" aria-modal="true" aria-label="Bonus games">
+      <div class="shead"><h2>Bonus games</h2><div class="chip"><span class="coin-i" aria-hidden="true">$</span><b id="hubCoins">0</b></div><button class="xbtn" id="hubX" aria-label="Close">✕</button></div>
+      <div class="sbody"><p class="pnote" id="hubNote"></p><div class="hubg" id="hubG"></div></div>
+    </div>
+  </div>
+
+  <div id="journey" class="ov" hidden>
+    <div class="card sheet" role="dialog" aria-modal="true" aria-label="Journey map">
+      <div class="shead"><h2>Adventure</h2><button class="xbtn" id="jX" aria-label="Close">✕</button></div>
+      <div class="tabs" role="tablist"><button role="tab" id="tabIsl" class="sel" aria-selected="true">🏝️ Islands</button><button role="tab" id="tabTro" aria-selected="false">🏆 Trophies <span id="troCount"></span></button></div>
+      <div class="sbody" id="jBody"></div>
+    </div>
+  </div>
+
+  <div id="shop" class="ov" hidden>
+    <div class="card sheet" role="dialog" aria-modal="true" aria-label="Shop">
+      <div class="shead"><h2>Shop</h2><div class="chip"><span class="coin-i" aria-hidden="true">$</span><b id="shopCoins">0</b></div><button class="xbtn" id="shopX" aria-label="Close the shop">✕</button></div>
+      <div class="tabs" role="tablist"><button role="tab" id="tabPets" class="sel" aria-selected="true">🐶 Animal friends</button><button role="tab" id="tabWear" aria-selected="false">👕 Clothes</button></div>
+      <div class="sbody">
+        <div id="petPane"><p class="pnote">Animal friends follow you around the islands. Tap a friend you own to bring it along (up to 4).</p><div class="shopg" id="shopG"></div></div>
+        <div id="wearPane" hidden><div class="wearw"><div class="avprev" id="avPrev"></div><div class="wearg" id="wardG"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gate" class="ov" hidden>
+    <div class="card gatebox" role="dialog" aria-modal="true" aria-label="Grown-ups check"><p>For grown-ups. Please answer this first:</p><p id="gq"></p><div class="padw" id="gpad"></div><button class="btn soft" id="gateX">Cancel</button></div>
+  </div>
+
+  <div id="parents" class="ov" hidden>
+    <div class="card sheet" role="dialog" aria-modal="true" aria-label="For grown-ups"><div class="shead"><h2>For Grown-ups</h2><button class="xbtn" id="parX" aria-label="Close">✕</button></div><div class="sbody" id="parBody"></div></div>
+  </div>
+
+  <div id="friends" class="ov" hidden>
+    <div class="card sheet friendscard" role="dialog" aria-modal="true" aria-label="Friends">
+      <div class="shead"><h2>Friends</h2><span class="fgname" id="fGroup"></span><button class="xbtn" id="friendsX" aria-label="Close friends">✕</button></div>
+      <div class="tabs" role="tablist" id="fTabs"><button role="tab" id="tabBoard" class="sel" aria-selected="true">🏆 Leaderboard</button><button role="tab" id="tabChat" aria-selected="false">💬 Chat<i class="tdot" id="chatDot" hidden></i></button></div>
+      <div class="sbody" id="fBody"></div>
+      <div class="chatbar" id="chatBar" hidden>
+        <div class="chips qchips" id="chatChips"></div>
+        <form class="ask chatform" id="chatForm" autocomplete="off"><input class="inp" id="chatIn" maxlength="120" placeholder="Type a kind message" aria-label="Type a message for your friends" enterkeyhint="send" autocapitalize="sentences"><button class="btn go sm" type="submit" id="chatSend">Send</button></form>
+        <p class="chatwarn" id="chatWarn" role="status" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="gfriends" class="ov" hidden>
+    <div class="card sheet" role="dialog" aria-modal="true" aria-label="Friends online settings"><div class="shead"><h2>Friends online</h2><button class="xbtn" id="gfX" aria-label="Back to For Grown-ups">✕</button></div><div class="sbody" id="gfBody"></div></div>
+  </div>
+
+  <div id="intro" class="ov intro" hidden>
+    <div class="card icard" role="dialog" aria-modal="true" aria-labelledby="iTitle">
+      <div class="itop"><span class="istep" id="iStep">1 of 7</span><button class="say" id="iSay" aria-label="Read this page aloud">🔊</button><button class="btn soft sm" id="iSkip">Skip</button></div>
+      <div class="iart" id="iArt" aria-hidden="true"></div>
+      <h2 id="iTitle"></h2>
+      <p id="iText"></p>
+      <div class="idots" id="iDots" aria-hidden="true"></div>
+      <div class="inav"><button class="btn soft" id="iBack">◀ Back</button><span class="sp"></span><button class="btn go" id="iNext">Next ▶</button></div>
+      <div class="iend" id="iEnd" hidden><button class="btn go big" id="iGo">Start the adventure! ▶</button><button class="btn soft" id="iTour">👆 Show me the buttons</button></div>
+    </div>
+  </div>
+
+  <div id="help" class="ov" hidden>
+    <div class="card sheet helpcard" role="dialog" aria-modal="true" aria-label="Help">
+      <div class="shead"><h2>Ask Chicky</h2><button class="xbtn" id="helpX" aria-label="Close help">✕</button></div>
+      <div class="sbody">
+        <form class="ask" id="askForm" autocomplete="off"><span class="askface" aria-hidden="true">🐥</span><input class="inp" id="askIn" type="search" placeholder="Type a question, like: how do I fix a bridge?" aria-label="Type your question for Chicky"><button class="btn go sm" type="submit">Ask</button></form>
+        <div class="chips" id="askChips"></div>
+        <div class="answer" id="askAns" hidden></div>
+        <div class="hrow"><button class="btn soft" id="helpIntro">📖 Watch the tutorial again</button><button class="btn soft" id="helpTour">👆 Show me the buttons</button></div>
+        <h3 class="hh3">Every button</h3>
+        <div class="bguide" id="bGuide"></div>
+        <h3 class="hh3">All help topics</h3>
+        <div class="faq" id="faqList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tour" class="tourov" hidden><div class="hole" id="tHole"></div><div class="ttip" id="tTip" role="dialog" aria-live="polite"><p id="tText"></p><div class="tnav"><span class="tcount" id="tCount"></span><span class="sp"></span><button class="btn soft sm" id="tSkip">Done</button><button class="btn go sm" id="tNext">Next ▶</button></div></div></div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="title" class="ov title">
+    <div class="tcard">
+      <div class="tlogo"><span class="t1" id="tName">Adley’s</span><span class="t2">Math Farm</span><span class="t3">Island Adventure</span></div>
+      <div class="tscene" aria-hidden="true"><span>🏝️</span><span style="font-size:1.3em">🧑‍🌾</span><span>🐔</span><span>🗝️</span></div>
+      <p class="tsub" id="tSub">Explore 50 secret islands. Find the hidden farms, solve their puzzles, fix the bridges and uncover the treasure. What is waiting on island 50?</p>
+      <div class="medals" id="tmedals"></div>
+      <button class="btn go big" id="playBtn">▶ Let’s play!</button>
+      <button class="btn soft" id="howBtn">📖 How to play</button>
+      <p class="terr" id="tErr" hidden></p>
+    </div>
+  </div>
+  <canvas id="fx" aria-hidden="true"></canvas>
+</div>
+<noscript><p style="font:20px sans-serif;padding:24px">Adley's Math Farm needs JavaScript. Please turn it on in your browser settings.</p></noscript>
+<script src="vendor/three.min.js?v=r128"></script>
+<script src="js/questions.js?v=6164428643"></script>
+<script src="js/world.js?v=6164428643"></script>
+<script src="js/bonus-games.js?v=6164428643"></script>
+<script src="js/friends.js?v=6164428643"></script>
+<script src="js/game.js?v=6164428643"></script>
+</body>
+</html>

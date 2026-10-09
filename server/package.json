@@ -1,0 +1,14 @@
+{
+  "name": "adley-math-farm-server",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Website and friends server for Adley's Math Farm (static game files + friend groups, leaderboard, island visits and filtered chat).",
+  "main": "server.js",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/filter.test.js test/api.test.js",
+    "admin": "node admin.js"
+  }
+}
