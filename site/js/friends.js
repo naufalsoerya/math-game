@@ -175,7 +175,6 @@ const Friends = (() => {
         <button class="btn go" data-act="askGrownup">👪 Ask a grown-up</button></div>`;
       return;
     }
-    if (!me) { body.innerHTML = `<div class="fhero"><p class="pnote">${netDown ? 'The friends server cannot be reached right now. Your game still saves on this device. Please try again later.' : 'Loading your friends…'}</p>${netDown ? '<button class="btn soft" data-act="retry">Try again</button>' : ''}</div>`; return; }
     if (me.status === 'pending') {
       body.innerHTML = `<div class="fhero"><div class="fart" aria-hidden="true"><span>⏳</span></div><h3>Almost there!</h3><p class="pnote">The grown-up who started <b>${esc(group ? group.name : 'the group')}</b> needs to say yes. Then you can see your friends here.</p><button class="btn soft" data-act="retry">Check again</button></div>`;
       return;
@@ -289,7 +288,6 @@ const Friends = (() => {
     if (!health) { el.innerHTML = `<h3>Friends online</h3><p class="pnote">A leaderboard, chat and island visits with friends are available when the game runs on your family website with its friends server. They are not available here.</p>`; return; }
     let line;
     if (!me) line = 'Not in a friend group yet. Join one with an invite code, or start a new group.';
-    else if (!me) line = 'Connecting to the friend group…';
     else if (me.status === 'pending') line = `${esc(me.name)} is waiting for the group host to say yes.`;
     else line = `${esc(me.name)} is in <b>${esc(group ? group.name : 'a friend group')}</b>${me.isHost ? ' (you started this group)' : ''}.${me.isHost && requests ? ` <b>${requests} ${requests === 1 ? 'child is' : 'children are'} waiting</b> for your yes.` : ''}`;
     el.innerHTML = `<h3>Friends online</h3><p class="pnote">${line}</p><div class="prow"><button class="btn soft" data-gf="open">👫 Friends settings</button></div>`;
@@ -347,7 +345,6 @@ const Friends = (() => {
         <div class="psec">${PRIVACY}</div>`;
       return;
     }
-    if (!me) { b.innerHTML = `${msg}<div class="psec"><p class="pnote">${netDown ? 'The friends server cannot be reached right now.' : 'Loading…'}</p><div class="prow"><button class="btn soft" data-act="reload">Try again</button></div></div>`; return; }
     if (!pin) {
       b.innerHTML = `${msg}<form class="psec" data-form="unlock"><h3>Grown-up PIN</h3><p class="pnote">Type the grown-up PIN chosen when ${esc(me.name)} joined <b>${esc(group ? group.name : 'the group')}</b>.</p>
         <div class="prow"><label for="gfUnlock">PIN</label><input class="inp pin" id="gfUnlock" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><button class="btn go sm" data-act="unlock">Open</button></div>
@@ -416,7 +413,7 @@ const Friends = (() => {
       if (pp.err) { gfMsg = pp.err; renderGF(); return; }
       gfBusy = true; gfMsg = ''; renderGF();
       const body = act === 'join' ? { code: val('gfCode'), playerName: val('gfName'), pin: pp.pin, perms: form, progress: snapshot() } : { groupName: val('gfGroup') || `${G.S.name}’s Friends`, hostKey: (document.getElementById('gfKey') || {}).value || '', playerName: val('gfName2'), pin: pp.pin, perms: form, progress: snapshot() };
-      const r = await req('POST', act === 'join' ? 'join' : 'groups', body, { noAuth: true }); gfBusy = false;
+      const r = await req('POST', act === 'join' ? 'join' : 'groups', body); gfBusy = false;
       if (r.ok) {
         me = r.data.me; group = r.data.group; lastHash = ''; pin = pp.pin; G.sfx('level');
         gfMsg = act === 'join' ? `Request sent! ${me.name} can play with the group once the host says yes.` : `Your group is ready! Share the invite code with other families.`;

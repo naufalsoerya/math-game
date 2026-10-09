@@ -177,7 +177,7 @@ async function open(databaseUrl) {
          week_key=$9, week_base=$10, snapshot=$11, last_sync=$12, last_seen=$13 WHERE id=$14`,
       [level, stars, coins, trophies, medals, legend, farms, bestStreak, weekKey, weekBase, JSON.stringify(snapshot), lastSync, lastSeen, id]);
   q.goPlayer = (hex, t, id) => run(
-    `UPDATE players SET status='gone', user_id=0, name_key='~gone~' || id, perm_board=0, perm_visit=0, perm_chat=0, snapshot='{}'::jsonb, left_at=$1 WHERE id=$2`,
+    `UPDATE players SET status='gone', name_key='~gone~' || id, perm_board=0, perm_visit=0, perm_chat=0, snapshot='{}'::jsonb, left_at=$1 WHERE id=$2`,
     [t, id]
   );
   q.deletePlayer = (id) => run('DELETE FROM players WHERE id = $1', [id]);

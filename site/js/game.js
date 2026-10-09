@@ -77,7 +77,7 @@
     return fresh();
   }
   let S = load();
-  function save() { serverSave(S); }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} serverSave(S); }
   // ask the browser to keep saved progress (when hosted as a website); silently ignored where unsupported
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { }); } catch (e) { }
   const doneCount = () => S.plots.filter(p => p.done).length;
