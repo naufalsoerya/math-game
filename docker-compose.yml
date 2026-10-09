@@ -7,9 +7,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mathfarm
+      POSTGRES_USER: mathgame_prod_user
+      POSTGRES_PASSWORD: Althessa2024
+      POSTGRES_DB: mathgame_prod_db
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
