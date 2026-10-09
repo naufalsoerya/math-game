@@ -42,6 +42,18 @@
      saved state
      ===================================================================== */
   const KEY = 'adley-math-farm-v2';
+  const AUTH_KEY = 'adley-math-farm-auth';
+  let authToken = null;
+  try { authToken = localStorage.getItem(AUTH_KEY); } catch(e){}
+  const setAuth = t => { authToken = t; try { if (t) localStorage.setItem(AUTH_KEY, t); else localStorage.removeItem(AUTH_KEY); } catch(e){} };
+  const authHeaders = () => authToken ? { Authorization: 'Bearer ' + authToken } : {};
+  async function serverSave(s) {
+    if (!authToken) return;
+    try {
+      const prog = { level: s.level, stars: s.stars, coins: s.coins, trophies: Object.keys(s.trophies || {}).length, medals: (s.medals || []).length, legend: s.legend || 0, bestStreak: s.bestStreak || 0, plots: s.plots, world: (typeof W !== 'undefined' && W && !V) ? W.save() : s.world, wear: s.wear, follow: s.follow };
+      await fetch('api/game/progress', { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ state: s, progress: prog }), cache: 'no-store', keepalive: true, credentials: 'omit' });
+    } catch(e){}
+  }
   const newPlots = () => TOPICS.map(() => ({ done: false, stars: 0 }));
   const fresh = () => ({
     v: 2, name: 'Adley', level: 1, coins: 0, stars: 0, plots: newPlots(), owned: [], follow: [],
@@ -65,7 +77,7 @@
     return fresh();
   }
   let S = load();
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+  function save() { serverSave(S); }
   // ask the browser to keep saved progress (when hosted as a website); silently ignored where unsupported
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { }); } catch (e) { }
   const doneCount = () => S.plots.filter(p => p.done).length;
@@ -1088,6 +1100,63 @@
   function leaveVisit() { if (!V) return false; V = null; app.classList.remove('visiting'); $('#visitBar').hidden = true; hidePrompt(); buildLevel(); setTimeout(layoutVars, 30); return true; }
   function goHome() { if (!leaveVisit()) return; sfx('level'); buddy(`Welcome home, ${S.name}!`, true); }
 
+  /* ================================================================ auth UI */
+  const $auth = s => document.querySelector(s);
+  function showAuthMsg(msg) { const el = $auth('#authMsg'); el.textContent = msg; el.hidden = !msg; }
+  function showAuth() { $auth('#auth').hidden = false; $auth('#title').hidden = true; }
+  function hideAuth() { $auth('#auth').hidden = true; }
+  async function tryAutoLogin() {
+    if (!authToken) { showAuth(); return; }
+    try {
+      const r = await fetch('api/auth/me', { headers: authHeaders(), cache: 'no-store', credentials: 'omit' });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.progress && d.progress.v === 2) S = merge(d.progress);
+        S.name = d.user.username;
+        hideAuth(); $auth('#title').hidden = false; init();
+        return;
+      }
+    } catch(e){}
+    setAuth(null); showAuth();
+  }
+  $auth('#showRegister').onclick = () => { $auth('#authLogin').hidden = true; $auth('#authRegister').hidden = false; showAuthMsg(''); };
+  $auth('#showLogin').onclick = () => { $auth('#authRegister').hidden = true; $auth('#authLogin').hidden = false; showAuthMsg(''); };
+  $auth('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault(); showAuthMsg('');
+    const u = $auth('#loginUser').value.trim(), p = $auth('#loginPass').value;
+    if (!u || !p) { showAuthMsg('Please fill in all fields.'); return; }
+    $auth('#loginBtn').disabled = true;
+    try {
+      const r = await fetch('api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p }), cache: 'no-store', credentials: 'omit' });
+      const d = await r.json();
+      if (r.ok) {
+        setAuth(d.token);
+        if (d.progress && d.progress.v === 2) S = merge(d.progress);
+        S.name = d.user.username;
+        hideAuth(); $auth('#title').hidden = false; init();
+      } else showAuthMsg(d.message || 'Login failed.');
+    } catch(e) { showAuthMsg('Cannot reach the server. Try again.'); }
+    $auth('#loginBtn').disabled = false;
+  });
+  $auth('#registerForm').addEventListener('submit', async e => {
+    e.preventDefault(); showAuthMsg('');
+    const u = $auth('#regUser').value.trim(), p = $auth('#regPass').value, p2 = $auth('#regPass2').value;
+    if (!u || !p) { showAuthMsg('Please fill in all fields.'); return; }
+    if (p !== p2) { showAuthMsg('Passwords do not match.'); return; }
+    if (p.length < 6) { showAuthMsg('Password must be at least 6 characters.'); return; }
+    $auth('#regBtn').disabled = true;
+    try {
+      const r = await fetch('api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p }), cache: 'no-store', credentials: 'omit' });
+      const d = await r.json();
+      if (r.ok) {
+        setAuth(d.token);
+        S = fresh(); S.name = d.user.username;
+        hideAuth(); $auth('#title').hidden = false; init();
+      } else showAuthMsg(d.message || 'Registration failed.');
+    } catch(e) { showAuthMsg('Cannot reach the server. Try again.'); }
+    $auth('#regBtn').disabled = false;
+  });
+
   function init() {
     fx.size(); makeWorld(); buildLevel(); updTitle(); renderHUD(); buddyAuto(); layoutVars(); setTimeout(layoutVars, 600);
     if (hasFriends()) {
@@ -1097,14 +1166,15 @@
           avatar: w => { const c = {}; Object.keys(WEAR).forEach(k => { c[k] = wearHex(w, k); }); return avatarSVG(c); },
           isTitle: () => !$('#title').hidden, visiting: () => V, visit: visitFriend, goHome, has3D: () => !!W,
           progress: () => ({ level: S.level, stars: S.stars, coins: S.coins, trophies: Object.keys(S.trophies).length, medals: S.medals.length, legend: S.legend, bestStreak: S.bestStreak, plots: S.plots, world: W && !V ? W.save() : S.world, wear: S.wear, follow: S.follow }),
-          layout: layoutVars
+          layout: layoutVars,
+          authToken: () => authToken
         });
       } catch (e) { console.warn('friends module failed to start', e); }
     }
   }
   const hot = window.claude && window.claude.hot;
   try { if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ state: (W && !V && (S.world = W.save()), S) })); } catch (e) { }
-  function boot(data) { if (data && data.state && data.state.v === 2) S = merge(data.state); init(); }
+  function boot(data) { if (data && data.state && data.state.v === 2) S = merge(data.state); tryAutoLogin(); }
   if (hot && typeof hot.ready === 'function') hot.ready(boot); else boot((hot && hot.data) || {});
   window.__game = { get S() { return S; }, get Q() { return Q; }, W: () => W, visitFriend, goHome, get V() { return V; }, openQ, levelComplete, harvest, playBonus, travel, renderHub, arc: () => arcade(), pickVariant, openIntro, startTour, openHelp, searchFAQ, checkTrophies, quests, TROPHIES, FAQ };
 })();

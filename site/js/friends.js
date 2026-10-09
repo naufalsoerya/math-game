@@ -18,9 +18,9 @@ const Friends = (() => {
   ];
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  let G = null;                  // helpers from the game engine
-  let st = {};                   // kept on this device: token, ev (last event seen), chatSeen (last chat message read)
-  let health = null;             // server info; null = no friends server here
+  let G = null;
+  let st = { ev: 0, chatSeen: 0 };
+  let health = null;
   let me = null, group = null, board = null, boardErr = '', chat = [], chatErr = '', chatLatest = 0, unread = 0, requests = 0, netDown = false;
   let tab = 'board', metric = 'level', gfView = 'main', confirm = '', hostList = null, hist = null, gfMsg = '', gfBusy = false;
   let form = { board: true, visit: true, chat: true };
@@ -28,8 +28,9 @@ const Friends = (() => {
   let pin = '', chatServerId = 0, renaming = 0;   // pin: the grown-up PIN, kept in memory only while the settings are open
 
   const esc = s => G.esc(s == null ? '' : s);
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
-  const store = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { } };
+  const getToken = () => G.authToken ? G.authToken() : null;
+  const load = () => st;
+  const store = () => {};
   const shown = id => !$(id).hidden;
   function when(ms) {
     const d = new Date(ms), diff = Date.now() - ms;
@@ -43,11 +44,14 @@ const Friends = (() => {
     opts = opts || {}; const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const to = setTimeout(() => ctrl && ctrl.abort(), opts.timeout || 10000);
     try {
-      const h = { Accept: 'application/json' }; if (st.token && !opts.noAuth) h.Authorization = 'Bearer ' + st.token; if (body !== undefined) h['Content-Type'] = 'application/json'; if (opts.pin) h['X-Parent-Pin'] = opts.pin;
+      const h = { Accept: 'application/json' };
+      const token = getToken();
+      if (token && !opts.noAuth) h.Authorization = 'Bearer ' + token;
+      if (body !== undefined) h['Content-Type'] = 'application/json'; if (opts.pin) h['X-Parent-Pin'] = opts.pin;
       const r = await fetch('api/' + path, { method, headers: h, body: body !== undefined ? JSON.stringify(body) : undefined, signal: ctrl ? ctrl.signal : undefined, cache: 'no-store', keepalive: !!opts.keepalive, credentials: 'omit' });
       let j = null; try { j = await r.json(); } catch (e) { }
       netDown = false;
-      if (r.status === 401 && st.token && !opts.noAuth) lost();
+      if (r.status === 401 && token && !opts.noAuth) lost();
       if (opts.pin && j && (j.error === 'pin' || j.error === 'pinLocked')) pin = '';
       return { ok: r.ok, status: r.status, data: j || {} };
     } catch (e) {
@@ -57,7 +61,7 @@ const Friends = (() => {
   const msgOf = r => (r.data && r.data.message) || 'Something went wrong. Please try again.';
 
   function lost() {
-    const had = !!me; st = { }; store(); me = null; group = null; board = null; chat = []; unread = 0; requests = 0;
+    const had = !!me; st = { ev: 0, chatSeen: 0 }; me = null; group = null; board = null; chat = []; unread = 0; requests = 0;
     if (G.visiting()) { G.goHome(); hideVisitBar(); }
     if (had) G.toast('👫', 'This device left the friend group', 'A grown-up can join again in 👪 For Grown-ups.');
     updButton(); if (shown('#friends')) render(); if (shown('#gfriends')) renderGF();
@@ -65,16 +69,16 @@ const Friends = (() => {
 
   /* ---------------------------------------------------------------- start-up */
   async function checkHealth(tries) {
-    if (location.protocol === 'file:') return;   // opened as a file: there is no server to ask
+    if (location.protocol === 'file:') return;
     const r = await req('GET', 'health', undefined, { noAuth: true, timeout: 6000 });
-    if (r.ok && r.data && r.data.friends) { health = r.data; updButton(); if (st.token) { await refreshMe(); poll(); } return; }
+    if (r.ok && r.data && r.data.friends) { health = r.data; updButton(); await refreshMe(); if (me) poll(); return; }
     if (r.status === 0 || r.status === 429 || r.status >= 500) setTimeout(() => checkHealth((tries || 0) + 1), Math.min(300e3, 30e3 * Math.pow(2, tries || 0)));
   }
   async function refreshMe() {
     const r = await req('GET', 'me'); if (r.ok) { me = r.data.me; group = r.data.group; } updButton(); return r;
   }
   function init(api) {
-    G = api; st = load();
+    G = api; st = { ev: 0, chatSeen: 0 };
     $('#friendsBtn').onclick = () => { G.sfx('tap'); openSheet(); };
     $('#friendsX').onclick = closeSheet;
     $('#tabBoard').onclick = () => { G.sfx('tap'); tab = 'board'; render(); loadBoard(); };
@@ -99,7 +103,7 @@ const Friends = (() => {
     let hiddenAt = 0;
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { hiddenAt = Date.now(); return; }
-      if (!health || !st.token) return;
+      if (!health || !getToken()) return;
       poll(); if (shown('#friends') && tab === 'chat') loadChat(Date.now() - hiddenAt > 10 * 60e3); // after a long sleep, reload the whole chat
     });
     checkHealth(0);
@@ -114,7 +118,7 @@ const Friends = (() => {
   }
   async function poll() {
     clearTimeout(pollT);
-    if (!health || !st.token) return;
+    if (!health || !getToken()) return;
     if (document.hidden) { pollT = setTimeout(poll, 30e3); return; }
     const r = await req('GET', `poll?event=${st.ev || 0}&chat=${st.chatSeen || 0}`);
     if (r.ok) {
@@ -144,7 +148,7 @@ const Friends = (() => {
     return Object.assign({}, p, { world: w ? { level: w.level, coins: w.coins, chests: w.chests, expl: w.expl, disc: w.disc } : null });
   }
   function touch(important) {
-    if (!health || !st.token || syncing) return;
+    if (!health || !getToken() || syncing) return;
     const p = snapshot(); const h = JSON.stringify(p);
     if (h === lastHash) return;
     if (!important && Date.now() - lastSync < 60e3) return;
@@ -157,7 +161,7 @@ const Friends = (() => {
   }
 
   /* ---------------------------------------------------------------- kids' Friends sheet */
-  function openSheet() { $('#friends').hidden = false; render(); if (me && me.status !== 'pending') { if (tab === 'board') loadBoard(); else loadChat(true); } else if (st.token) refreshMe().then(render); }
+  function openSheet() { $('#friends').hidden = false; render(); if (me && me.status !== 'pending') { if (tab === 'board') loadBoard(); else loadChat(true); } else refreshMe().then(render); }
   function closeSheet() { $('#friends').hidden = true; clearTimeout(chatT); }
   function render() {
     const body = $('#fBody'); const member = me && me.status !== 'pending';
@@ -165,7 +169,7 @@ const Friends = (() => {
     $('#fTabs').hidden = !member; $('#chatBar').hidden = !(member && tab === 'chat' && me.perms && me.perms.chat && !chatErr);
     $('#tabBoard').classList.toggle('sel', tab === 'board'); $('#tabChat').classList.toggle('sel', tab === 'chat');
     $('#tabBoard').setAttribute('aria-selected', String(tab === 'board')); $('#tabChat').setAttribute('aria-selected', String(tab === 'chat'));
-    if (!st.token) {
+    if (!me) {
       body.innerHTML = `<div class="fhero"><div class="fart" aria-hidden="true"><span>🧑‍🌾</span><span>👫</span><span>🧑‍🌾</span></div>
         <h3>Play with your friends!</h3><p class="pnote">See who has the most stars, send kind messages and visit your friends’ islands. A grown-up sets this up first.</p>
         <button class="btn go" data-act="askGrownup">👪 Ask a grown-up</button></div>`;
@@ -284,7 +288,7 @@ const Friends = (() => {
     if (!el) return;
     if (!health) { el.innerHTML = `<h3>Friends online</h3><p class="pnote">A leaderboard, chat and island visits with friends are available when the game runs on your family website with its friends server. They are not available here.</p>`; return; }
     let line;
-    if (!st.token) line = 'Not in a friend group yet. Join one with an invite code, or start a new group.';
+    if (!me) line = 'Not in a friend group yet. Join one with an invite code, or start a new group.';
     else if (!me) line = 'Connecting to the friend group…';
     else if (me.status === 'pending') line = `${esc(me.name)} is waiting for the group host to say yes.`;
     else line = `${esc(me.name)} is in <b>${esc(group ? group.name : 'a friend group')}</b>${me.isHost ? ' (you started this group)' : ''}.${me.isHost && requests ? ` <b>${requests} ${requests === 1 ? 'child is' : 'children are'} waiting</b> for your yes.` : ''}`;
@@ -297,7 +301,7 @@ const Friends = (() => {
     $('#parents').hidden = true; $('#gfriends').hidden = false; gfView = 'main'; confirm = ''; gfMsg = ''; hist = null; renaming = 0;
     form = { board: true, visit: true, chat: true };
     renderGF();
-    if (health && st.token) { await refreshMe(); if (pin && me && me.isHost) await loadHostList(); renderGF(); }
+    if (health && getToken()) { await refreshMe(); if (pin && me && me.isHost) await loadHostList(); renderGF(); }
   }
   function closeGF() { $('#gfriends').hidden = true; confirm = ''; pin = ''; hostList = null; hist = null; G.openParents(); }
   async function loadHostList() { const r = await req('GET', 'host/members', undefined, { pin }); hostList = r.ok ? r.data.members : null; if (!r.ok && r.status !== 401) gfMsg = msgOf(r); if (shown('#gfriends')) renderGF(); }
@@ -313,7 +317,7 @@ const Friends = (() => {
   function renderGF() {
     // typed values survive a re-draw of the same page (an error message, a toggle); a new page starts empty at the top
     const keep = {}; $('#gfBody').querySelectorAll('input[id]').forEach(e => { keep[e.id] = e.value; });
-    const shape = [!!st.token, me ? me.status : '-', !!pin, gfView].join(); const same = shape === gfShape;
+    const shape = [!!getToken(), me ? me.status : '-', !!pin, gfView].join(); const same = shape === gfShape;
     if (!same) { gfShape = shape; $('#gfBody').scrollTop = 0; }
     drawGF();
     if (same) Object.keys(keep).forEach(id => { const e = document.getElementById(id); if (e && $('#gfBody').contains(e)) e.value = keep[id]; });
@@ -323,7 +327,7 @@ const Friends = (() => {
     const msg = gfMsg ? `<p class="fwarn" role="status">${esc(gfMsg)}</p>` : '';
     if (!health) { b.innerHTML = `<div class="psec"><p class="pnote">The friends server cannot be reached from here.</p></div>`; return; }
     if (gfView === 'history') return renderHistory();
-    if (!st.token) {
+    if (!me) {
       b.innerHTML = `${msg}
         <form class="psec" data-form="join"><h3>Join a friend group</h3>
           <p class="pnote">Ask the grown-up who started the group for the invite code. They will say yes to ${esc(nm)} before ${esc(nm)} can see the group.</p>
@@ -390,7 +394,7 @@ const Friends = (() => {
     const pm = t.closest('[data-perm]');
     if (pm) {
       G.sfx('tap'); const k = pm.dataset.perm;
-      if (me && st.token) { const p = Object.assign({}, me.perms); p[k] = !p[k]; const r = await req('PUT', 'me', { perms: p }, { pin }); if (r.ok) { me = r.data.me; group = r.data.group; gfMsg = ''; } else gfMsg = msgOf(r); }
+      if (me && getToken()) { const p = Object.assign({}, me.perms); p[k] = !p[k]; const r = await req('PUT', 'me', { perms: p }, { pin }); if (r.ok) { me = r.data.me; group = r.data.group; gfMsg = ''; } else gfMsg = msgOf(r); }
       else form[k] = !form[k];
       renderGF(); return;
     }
@@ -414,7 +418,7 @@ const Friends = (() => {
       const body = act === 'join' ? { code: val('gfCode'), playerName: val('gfName'), pin: pp.pin, perms: form, progress: snapshot() } : { groupName: val('gfGroup') || `${G.S.name}’s Friends`, hostKey: (document.getElementById('gfKey') || {}).value || '', playerName: val('gfName2'), pin: pp.pin, perms: form, progress: snapshot() };
       const r = await req('POST', act === 'join' ? 'join' : 'groups', body, { noAuth: true }); gfBusy = false;
       if (r.ok) {
-        st = { token: r.data.token, ev: 0, chatSeen: 0 }; store(); me = r.data.me; group = r.data.group; lastHash = ''; pin = pp.pin; G.sfx('level');
+        me = r.data.me; group = r.data.group; lastHash = ''; pin = pp.pin; G.sfx('level');
         gfMsg = act === 'join' ? `Request sent! ${me.name} can play with the group once the host says yes.` : `Your group is ready! Share the invite code with other families.`;
         if (me.isHost) await loadHostList(); renderGF(); updButton(); poll(); return;
       }
@@ -432,7 +436,7 @@ const Friends = (() => {
     if (act === 'no') { confirm = ''; renaming = 0; renderGF(); return; }
     if (act === 'leaveYes') {
       const r = await req('DELETE', 'me', undefined, { pin });
-      if (r.ok || r.status === 401) { const host = me && me.isHost; st = {}; store(); me = null; group = null; hostList = null; board = null; chat = []; chatServerId = 0; unread = 0; requests = 0; confirm = ''; pin = ''; gfMsg = host ? 'The group is closed.' : 'This device has left the group.'; if (G.visiting()) { hideVisitBar(); G.goHome(); } updButton(); }
+      if (r.ok || r.status === 401) { const host = me && me.isHost; me = null; group = null; hostList = null; board = null; chat = []; chatServerId = 0; unread = 0; requests = 0; confirm = ''; pin = ''; gfMsg = host ? 'The group is closed.' : 'This device has left the group.'; if (G.visiting()) { hideVisitBar(); G.goHome(); } updButton(); }
       else gfMsg = msgOf(r);
       renderGF(); return;
     }
@@ -445,5 +449,5 @@ const Friends = (() => {
   }
   function selectCode() { const el = document.getElementById('gfCodeShow'); if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); gfMsg = 'Select and copy the code above.'; }
 
-  return { init, touch, parentsSection, inGroup: () => !!(st.token && me && me.status !== 'pending'), _poll: () => poll(), _state: () => ({ health, me, group, st, unread, requests, board, chat }) };
+  return { init, touch, parentsSection, inGroup: () => !!(getToken() && me && me.status !== 'pending'), _poll: () => poll(), _state: () => ({ health, me, group, st, unread, requests, board, chat }) };
 })();
