@@ -949,16 +949,17 @@ input[type=range] { width: min(320px, 100%); accent-color: var(--good); height: 
 }
 .authcard .tlogo {
   text-align: center;
-  margin: 0 auto 12px;
-  transform: rotate(-2deg) scale(.5);
+  margin: 0 auto 0;
+  transform: rotate(-2deg) scale(.45);
   transform-origin: center top;
   line-height: .85;
-  height: 80px;
+  height: 100px;
 }
 .authcard h3 {
   margin: 0 0 16px;
   font: 800 24px/1.15 var(--f-disp);
   text-align: center;
+  clear: both;
 }
 .authcard .prow {
   display: block;
@@ -1026,7 +1027,7 @@ input[type=range] { width: min(320px, 100%); accent-color: var(--good); height: 
 /* small phones */
 @media (max-width: 400px) {
   .authcard { padding: 18px 14px 16px; border-radius: 20px; margin: 8px; width: calc(100% - 16px); }
-  .authcard .tlogo { transform: rotate(-2deg) scale(.36); height: 56px; margin-bottom: 6px; }
+  .authcard .tlogo { transform: rotate(-2deg) scale(.36); height: 70px; margin-bottom: 0; }
   .authcard h3 { font-size: 20px; margin-bottom: 10px; }
   .authcard .prow { margin-bottom: 10px; }
   .authcard .prow input,
@@ -1036,7 +1037,7 @@ input[type=range] { width: min(320px, 100%); accent-color: var(--good); height: 
 /* short screens / keyboard open */
 @media (max-height: 600px) {
   .auth::before { display: none; }
-  .authcard .tlogo { transform: rotate(-2deg) scale(.32); height: 44px; margin-bottom: 2px; }
+  .authcard .tlogo { transform: rotate(-2deg) scale(.32); height: 55px; margin-bottom: 0; }
   .authcard { padding-top: 14px; }
   .authcard h3 { margin-bottom: 10px; font-size: 20px; }
 }
