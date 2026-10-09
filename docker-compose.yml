@@ -13,7 +13,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mathfarm -d mathfarm"]
+      test: ["CMD-SHELL", "pg_isready -U mathgame_prod_user -d mathgame_prod_db"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -29,7 +29,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://mathfarm:mathfarm_secret@db:5432/mathfarm
+      # Host must be "db" (Docker service name), not localhost.
+      DATABASE_URL: postgresql://mathgame_prod_user:Althessa2024@db:5432/mathgame_prod_db
       HOST: 0.0.0.0
       SITE_DIR: /app/site
     env_file: server/.env
