@@ -1,0 +1,23 @@
+# Start:  docker compose up -d --build      Logs: docker compose logs -f      Stop: docker compose down
+# Settings come from server/.env (copy server/.env.example first). The database lives in the "mathfarm-data" volume.
+name: mathfarm            # fixed project name, so a new package folder keeps using the same database volume
+services:
+  mathfarm:
+    build: .
+    image: adley-math-farm:2.1.0
+    restart: unless-stopped
+    env_file: server/.env
+    environment:
+      HOST: 0.0.0.0          # inside the container; the port below is only opened on this machine
+      DATA_DIR: /data
+      SITE_DIR: /app/site
+      TRUSTED_PROXIES: ""      # the proxy reaches the container from the Docker network (a private address)
+    ports:
+      - "127.0.0.1:8080:8080"   # nginx (or another proxy) on this machine forwards HTTPS traffic here
+    volumes:
+      - mathfarm-data:/data
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+volumes:
+  mathfarm-data:

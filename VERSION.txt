@@ -1,0 +1,6 @@
+Adley's Math Farm - web package
+Version: 2.1.0
+Build id: 6164428643
+Built: 2026-10-09T07:11Z
+three.js: r128 (bundled in site/vendor)
+Friends server: Node.js 22.13+ or 24 LTS, no npm packages
