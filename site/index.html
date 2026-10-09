@@ -220,7 +220,33 @@
 
   <div id="toasts" aria-live="polite"></div>
 
-  <div id="title" class="ov title">
+  <div id="auth" class="ov auth">
+    <div class="card authcard">
+      <div class="tlogo"><span class="t1">Adley's</span><span class="t2">Math Farm</span></div>
+      <div id="authMsg" class="fwarn" hidden></div>
+      <div id="authLogin">
+        <h3>Log in</h3>
+        <form id="loginForm" autocomplete="off">
+          <div class="prow"><label for="loginUser">Username</label><input class="inp" id="loginUser" maxlength="30" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
+          <div class="prow"><label for="loginPass">Password</label><input class="inp" id="loginPass" type="password" maxlength="100" autocomplete="current-password" required></div>
+          <div class="prow"><button class="btn go" type="submit" id="loginBtn">Log in</button></div>
+        </form>
+        <p class="pnote">Don't have an account? <button class="btn soft sm" id="showRegister">Register</button></p>
+      </div>
+      <div id="authRegister" hidden>
+        <h3>Register</h3>
+        <form id="registerForm" autocomplete="off">
+          <div class="prow"><label for="regUser">Username</label><input class="inp" id="regUser" maxlength="30" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
+          <div class="prow"><label for="regPass">Password</label><input class="inp" id="regPass" type="password" minlength="6" maxlength="100" autocomplete="new-password" required></div>
+          <div class="prow"><label for="regPass2">Password again</label><input class="inp" id="regPass2" type="password" minlength="6" maxlength="100" autocomplete="new-password" required></div>
+          <div class="prow"><button class="btn go" type="submit" id="regBtn">Register</button></div>
+        </form>
+        <p class="pnote">Already have an account? <button class="btn soft sm" id="showLogin">Log in</button></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="title" class="ov title" hidden>
     <div class="tcard">
       <div class="tlogo"><span class="t1" id="tName">Adley’s</span><span class="t2">Math Farm</span><span class="t3">Island Adventure</span></div>
       <div class="tscene" aria-hidden="true"><span>🏝️</span><span style="font-size:1.3em">🧑‍🌾</span><span>🐔</span><span>🗝️</span></div>

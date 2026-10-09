@@ -1,23 +1,43 @@
-# Start:  docker compose up -d --build      Logs: docker compose logs -f      Stop: docker compose down
-# Settings come from server/.env (copy server/.env.example first). The database lives in the "mathfarm-data" volume.
-name: mathfarm            # fixed project name, so a new package folder keeps using the same database volume
+# Start:  docker compose up -d --build
+# Logs:   docker compose logs -f
+# Stop:   docker compose down
+name: mathfarm
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mathfarm
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mathfarm -d mathfarm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "3" }
+
   mathfarm:
     build: .
-    image: adley-math-farm:2.1.0
+    image: adley-math-farm:2.2.0
     restart: unless-stopped
-    env_file: server/.env
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      HOST: 0.0.0.0          # inside the container; the port below is only opened on this machine
-      DATA_DIR: /data
+      DATABASE_URL: postgresql://mathfarm:mathfarm_secret@db:5432/mathfarm
+      HOST: 0.0.0.0
       SITE_DIR: /app/site
-      TRUSTED_PROXIES: ""      # the proxy reaches the container from the Docker network (a private address)
+    env_file: server/.env
     ports:
-      - "127.0.0.1:8080:8080"   # nginx (or another proxy) on this machine forwards HTTPS traffic here
-    volumes:
-      - mathfarm-data:/data
+      - "127.0.0.1:8080:8080"
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "5" }
+
 volumes:
-  mathfarm-data:
+  pgdata:

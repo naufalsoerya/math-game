@@ -909,3 +909,19 @@ input[type=range] { width: min(320px, 100%); accent-color: var(--good); height: 
   .hbtns { gap: 5px; }
 }
 .inp.pin { width: 150px; letter-spacing: 3px; }
+
+/* ---- auth overlay ---- */
+.auth { z-index: 9999; background: linear-gradient(#9ED8F7 0 55%, transparent 55%), linear-gradient(170deg, #9AD86F, #5FAF45); flex-direction: column; overflow-y: auto; }
+.auth::before { content: ''; position: absolute; left: -10%; right: -10%; top: 48%; height: 26%; background: radial-gradient(ellipse at 25% 100%, #7CC85A 0 45%, transparent 46%), radial-gradient(ellipse at 75% 100%, #6DBA4E 0 48%, transparent 49%); pointer-events: none; }
+.auth::after { content: '🏝️ 🧑‍🌾 🐔 🌾'; position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); font-size: clamp(40px, 7vw, 64px); letter-spacing: 12px; opacity: .35; pointer-events: none; filter: drop-shadow(0 4px 0 rgba(43,35,64,.15)); }
+.authcard { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 32px 36px 36px; border-radius: 28px; background: var(--paper); border: var(--ol); box-shadow: 0 8px 0 var(--ink); }
+.authcard .tlogo { text-align: center; margin-bottom: 16px; }
+.authcard h3 { margin: 0 0 12px; font-size: 1.2em; text-align: center; }
+.authcard .prow { margin-bottom: 10px; }
+.authcard .prow label { display: block; font-size: .85em; margin-bottom: 3px; color: #555; }
+.authcard .prow input { width: 100%; box-sizing: border-box; }
+.authcard .pnote { text-align: center; margin-top: 14px; font-size: .85em; }
+.authcard .btn.go { width: 100%; }
+.authcard .fwarn { margin-bottom: 12px; padding: 8px 12px; border-radius: 10px; background: #FFF3CD; color: #664D03; font-size: .88em; text-align: center; }
+#authRegister { display: none; }
+#authRegister:not([hidden]) { display: block; }
